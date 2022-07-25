@@ -1,6 +1,7 @@
 # PCI Vault PCD Form Golang-Vue example
 
-This is a working example on how to use the PCI Vault PCD Form
+This is a working example on how to use the
+[PCI Vault PCD Form](https://api.pcivault.io/pcd/how-to-capture-and-tokenize-payment-card-data.html)
 with a Vue frontend and Golang backend.
 
 This example is for reference purposes only. Use it to copy code into your
@@ -18,3 +19,8 @@ the `cd` to the backend directory and run `go run main.go`.
 
 In a separate terminal `cd` to the frontend directory 
 and run `npm install` followed by `npm run dev`.
+
+## More Information
+- [PCI Vault](https://pcivault.io)
+- [PCI Vault API](https://api.pcivault.io)
+- [PCI Vault PCD Form](https://api.pcivault.io/pcd/how-to-capture-and-tokenize-payment-card-data.html)
