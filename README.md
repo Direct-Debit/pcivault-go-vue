@@ -15,7 +15,7 @@ PCI_KEY=key-user
 PCI_PASSPHRASE=key-passphrase
 PCI_BASIC_AUTH=username:password
 ```
-the `cd` to the backend directory and run `go run main.go`.
+then `cd` to the backend directory and run `go run main.go`.
 
 In a separate terminal `cd` to the frontend directory 
 and run `npm install` followed by `npm run dev`.
