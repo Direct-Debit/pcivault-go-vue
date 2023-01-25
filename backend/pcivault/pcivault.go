@@ -9,7 +9,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/labstack/gommon/log"
-	"github.com/pkg/errors"
 	"io"
 	"net/http"
 	"os"
@@ -30,31 +29,33 @@ func basicAuth() string {
 }
 
 func GetCaptureEndpoint() (CaptureEndpoint, error) {
+	log.Info("Creating capture endpoint")
+
 	keyUser := os.Getenv("PCI_KEY")
 	keyPassphrase := os.Getenv("PCI_PASSPHRASE")
 
 	url := fmt.Sprintf("%s/capture?user=%s&passphrase=%s", baseURL, keyUser, keyPassphrase)
 	req, err := http.NewRequest("POST", url, nil)
 	if err != nil {
-		return CaptureEndpoint{}, errors.Wrap(err, "failed to make request")
+		return CaptureEndpoint{}, fmt.Errorf("failed to make request: %w", err)
 	}
 	req.Header.Set("Authorization", fmt.Sprintf("Basic %s", basicAuth()))
 
-	resp, err := (&http.Client{}).Do(req)
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return CaptureEndpoint{}, errors.Wrap(err, "failed to create capture endpoint")
+		return CaptureEndpoint{}, fmt.Errorf("failed to create capture endpoint: %w", err)
 	}
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return CaptureEndpoint{}, errors.Wrap(err, "failed to read PCI Vault response")
+		return CaptureEndpoint{}, fmt.Errorf("failed to read PCI Vault response: %w", err)
 	}
 	if resp.StatusCode >= http.StatusBadRequest {
 		log.Error(string(body))
-		return CaptureEndpoint{}, errors.New("failed to create capture endpoint (see logs)")
+		return CaptureEndpoint{}, fmt.Errorf("failed to create capture endpoint (see logs)")
 	}
 
 	var ce CaptureEndpoint
 	err = json.Unmarshal(body, &ce)
-	return ce, errors.Wrap(err, "failed to unmarshal capture endpoint result")
+	return ce, fmt.Errorf("failed to unmarshal capture endpoint result: %w", err)
 }

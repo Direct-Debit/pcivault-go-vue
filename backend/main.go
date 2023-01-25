@@ -1,9 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"github.com/labstack/echo"
 	"github.com/labstack/gommon/log"
-	"github.com/pkg/errors"
 	"net/http"
 	"pcivault-go-vue/pcivault"
 )
@@ -17,7 +17,7 @@ func main() {
 	server.GET("/get-secret", func(c echo.Context) error {
 		ce, err := pcivault.GetCaptureEndpoint()
 		if err != nil {
-			err = errors.Wrap(err, "could not get capture endpoint")
+			err = fmt.Errorf("could not get capture endpoint: %w", err)
 			log.Error(err)
 			return err
 		}
