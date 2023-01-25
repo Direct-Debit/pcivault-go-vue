@@ -1,7 +1,7 @@
 <template>
   <div v-for="token in tokens.tokens">
     <button @click="() => stripe(token)">
-      {{token.token}}
+      {{ token.token }}
     </button>
   </div>
 </template>
@@ -25,7 +25,11 @@ onMounted(async () => {
 })
 
 function stripe(token) {
-  fetch("/backend/stripe", {body: JSON.stringify(token), method:"POST"})
+  fetch("/backend/stripe", {
+    body: JSON.stringify(token), method: "POST", headers: {
+      'Content-Type': 'application/json'
+    },
+  })
 }
 </script>
 

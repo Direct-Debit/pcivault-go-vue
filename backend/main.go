@@ -36,6 +36,16 @@ func main() {
 	server.GET("/get-tokens", func(c echo.Context) error {
 		return c.JSON(http.StatusOK, map[string]any{"tokens": tokens})
 	})
+	server.POST("/stripe", func(c echo.Context) error {
+		var td pcivault.TokenData
+		err := c.Bind(&td)
+		if err != nil {
+			return err
+		}
+
+		err = pcivault.PostToStripe(td)
+		return err
+	})
 
 	err := server.Start("0.0.0.0:8080")
 	if err != nil {

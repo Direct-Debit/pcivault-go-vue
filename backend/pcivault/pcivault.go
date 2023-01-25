@@ -5,6 +5,7 @@
 package pcivault
 
 import (
+	"bytes"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -106,4 +107,60 @@ func GetVaultTokens() ([]TokenData, error) {
 	tokens := listResp[keyUser]
 	log.Infof("Retrieved a list of %d tokens", len(tokens))
 	return tokens, nil
+}
+
+func PostToStripe(td TokenData) error {
+	log.Info("Posting token to Stripe")
+
+	keyUser := os.Getenv("PCI_KEY")
+	keyPassphrase := os.Getenv("PCI_PASSPHRASE")
+
+	stripeKey := os.Getenv("STRIPE_KEY")
+
+	dataM := map[string]any{
+		"request": map[string]any{
+			"method": "POST",
+			"url":    "https://api.stripe.com/v1/sources",
+			"headers": []map[string]string{
+				{"Content-Type": "application/x-www-form-urlencoded"},
+				{"Authorization": "Basic " + base64.StdEncoding.EncodeToString([]byte(stripeKey+":"))},
+			},
+			"body": `type=card&card%5Bnumber%5D={{card_number}}&card%5Bexp_month%5D={{expiry_month}}&card%5Bexp_year%5D={{expiry_year}}`,
+		},
+	}
+	var b bytes.Buffer
+
+	jEnc := json.NewEncoder(&b)
+	jEnc.SetEscapeHTML(false)
+	err := jEnc.Encode(dataM)
+	if err != nil {
+		return fmt.Errorf("failed to marshal data for Stripe Request: %w", err)
+	}
+
+	url := fmt.Sprintf("%s/proxy/post?user=%s&passphrase=%s&token=%s&debug=true", baseURL, keyUser, keyPassphrase, td.Token)
+	if len(td.Reference) > 0 {
+		url = fmt.Sprintf("%s&reference=%s", url, td.Reference)
+	}
+	req, err := http.NewRequest("POST", url, &b)
+	if err != nil {
+		return fmt.Errorf("failed to make POST /proxy request: %w", err)
+	}
+	basicAuth(req)
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to post proxy: %w", err)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("failed to read PCI Vault response: %w", err)
+	}
+	if resp.StatusCode >= http.StatusBadRequest {
+		log.Error(string(body))
+		return fmt.Errorf("failed to send proxy (see logs)")
+	}
+
+	log.Infof("Proxy process kicked off")
+	return nil
 }
