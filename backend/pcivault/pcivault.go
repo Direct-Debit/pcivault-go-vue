@@ -57,5 +57,10 @@ func GetCaptureEndpoint() (CaptureEndpoint, error) {
 
 	var ce CaptureEndpoint
 	err = json.Unmarshal(body, &ce)
-	return ce, fmt.Errorf("failed to unmarshal capture endpoint result: %w", err)
+	if err != nil {
+		return ce, fmt.Errorf("failed to unmarshal capture endpoint result: %w", err)
+	}
+
+	log.Infof("Endpoint created: %s", ce.URL)
+	return ce, nil
 }
