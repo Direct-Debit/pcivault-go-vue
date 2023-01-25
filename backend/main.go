@@ -8,6 +8,16 @@ import (
 	"pcivault-go-vue/pcivault"
 )
 
+var tokens []pcivault.TokenData
+
+func init() {
+	var err error
+	tokens, err = pcivault.GetVaultTokens()
+	if err != nil {
+		log.Errorf("failed to get tokens from PCI Vault")
+	}
+}
+
 func main() {
 	server := echo.New()
 	/*
@@ -22,6 +32,9 @@ func main() {
 			return err
 		}
 		return c.JSON(http.StatusOK, ce)
+	})
+	server.GET("/get-tokens", func(c echo.Context) error {
+		return c.JSON(http.StatusOK, map[string]any{"tokens": tokens})
 	})
 
 	err := server.Start("0.0.0.0:8080")

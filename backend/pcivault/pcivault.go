@@ -19,13 +19,19 @@ type CaptureEndpoint struct {
 	Secret string `json:"secret"`
 }
 
+type TokenData struct {
+	Token     string `json:"token"`
+	Reference string `json:"reference,omitempty"`
+}
+
 const (
 	baseURL string = "https://api.pcivault.io/v1"
 )
 
-func basicAuth() string {
+func basicAuth(req *http.Request) {
 	auth := os.Getenv("PCI_BASIC_AUTH")
-	return base64.StdEncoding.EncodeToString([]byte(auth))
+	encoded := base64.StdEncoding.EncodeToString([]byte(auth))
+	req.Header.Set("Authorization", fmt.Sprintf("Basic %s", encoded))
 }
 
 func GetCaptureEndpoint() (CaptureEndpoint, error) {
@@ -39,7 +45,7 @@ func GetCaptureEndpoint() (CaptureEndpoint, error) {
 	if err != nil {
 		return CaptureEndpoint{}, fmt.Errorf("failed to make request: %w", err)
 	}
-	req.Header.Set("Authorization", fmt.Sprintf("Basic %s", basicAuth()))
+	basicAuth(req)
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -63,4 +69,41 @@ func GetCaptureEndpoint() (CaptureEndpoint, error) {
 
 	log.Infof("Endpoint created: %s", ce.URL)
 	return ce, nil
+}
+
+func GetVaultTokens() ([]TokenData, error) {
+	log.Info("Retrieving list of tokens")
+
+	keyUser := os.Getenv("PCI_KEY")
+
+	url := fmt.Sprintf("%s/vault?user=%s", baseURL, keyUser)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to make GET /vault request: %w", err)
+	}
+	basicAuth(req)
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tokens: %w", err)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read PCI Vault response: %w", err)
+	}
+	if resp.StatusCode >= http.StatusBadRequest {
+		log.Error(string(body))
+		return nil, fmt.Errorf("failed to get list of tokens (see logs)")
+	}
+
+	var listResp map[string][]TokenData
+	err = json.Unmarshal(body, &listResp)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal list response: %w", err)
+	}
+
+	tokens := listResp[keyUser]
+	log.Infof("Retrieved a list of %d tokens", len(tokens))
+	return tokens, nil
 }
