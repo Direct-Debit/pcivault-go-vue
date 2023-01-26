@@ -6,11 +6,14 @@ import (
 	"github.com/labstack/gommon/log"
 	"net/http"
 	"pcivault-go-vue/pcivault"
+	"time"
 )
 
 var tokens []pcivault.TokenData
 
 func init() {
+	http.DefaultClient.Timeout = time.Second * 5
+
 	var err error
 	tokens, err = pcivault.GetVaultTokens()
 	if err != nil {
