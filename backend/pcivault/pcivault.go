@@ -13,6 +13,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strconv"
 )
 
 type CaptureEndpoint struct {
@@ -141,10 +142,16 @@ func PostToStripe(td TokenData) error {
 		return fmt.Errorf("failed to marshal data for Stripe Request: %w", err)
 	}
 
-	url := fmt.Sprintf("%s/proxy/post?user=%s&passphrase=%s&token=%s&debug=true", baseURL, keyUser, keyPassphrase, td.Token)
+	url := fmt.Sprintf("%s/proxy/post?user=%s&passphrase=%s&token=%s", baseURL, keyUser, keyPassphrase, td.Token)
 	if len(td.Reference) > 0 {
 		url = fmt.Sprintf("%s&reference=%s", url, td.Reference)
 	}
+	debugMode, _ := strconv.ParseBool(os.Getenv("DEBUG_MODE"))
+	if debugMode {
+		// Only do this in debug mode with test cards, never in production
+		url = fmt.Sprintf("%s&debug=true", url)
+	}
+
 	req, err := http.NewRequest("POST", url, bytes.NewReader(dataB))
 	if err != nil {
 		return fmt.Errorf("failed to make POST /proxy request: %w", err)
@@ -165,6 +172,13 @@ func PostToStripe(td TokenData) error {
 		return fmt.Errorf("failed to send proxy (see logs)")
 	}
 
-	log.Infof("Proxy process kicked off")
+	var respBody map[string]any
+	err = json.Unmarshal(body, &respBody)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal response body: %w", err)
+	}
+	// The populated_template field will only be processed if the debug flag has been set to true in the request
+	log.Infof("Populated template: %v", respBody["populated_template"])
+
 	return nil
 }

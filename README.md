@@ -23,6 +23,13 @@ then `cd` to the backend directory and run `go run main.go`.
 In a separate terminal `cd` to the frontend directory 
 and run `npm install` followed by `npm run dev`.
 
+### Configuration
+These environment variable are also significant:
+```sh
+DEBUG_MODE=true # send proxy requests with debug flag enabled (default is false)
+STRIPE_KEY=sk_your_stripe_key # Stripe key for testing Stripe integration
+```
+
 ## More Information
 - [PCI Vault](https://pcivault.io)
 - [PCI Vault API](https://api.pcivault.io)
