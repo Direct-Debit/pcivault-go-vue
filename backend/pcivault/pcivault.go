@@ -117,6 +117,7 @@ func PostToStripe(td TokenData) error {
 
 	stripeKey := os.Getenv("STRIPE_KEY")
 
+	// This map is here to demonstrate the data structure. In production code, you would probably want to use a struct.
 	dataM := map[string]any{
 		"request": map[string]any{
 			"method": "POST",
@@ -125,14 +126,17 @@ func PostToStripe(td TokenData) error {
 				{"Content-Type": "application/x-www-form-urlencoded"},
 				{"Authorization": "Basic " + base64.StdEncoding.EncodeToString([]byte(stripeKey+":"))},
 			},
-			"body": `type=card&card%5Bnumber%5D={{card_number}}&card%5Bexp_month%5D={{expiry_month}}&card%5Bexp_year%5D={{expiry_year}}`,
+			"body": `type=card&card[number]={{card_number}}&card[exp_month]={{expiry_month}}&card[exp_year]={{expiry_year}}`,
+		},
+		"webhook": map[string]any{
+			// You may use this free beeceptor endpoint to test your integration,
+			// but please be mindful that it is rate-limited to 50 requests per day.
+			// Rather use your own beeceptor (or any similar service) endpoint.
+			"url": "https://vault.free.beeceptor.com/example",
 		},
 	}
-	var b bytes.Buffer
 
-	jEnc := json.NewEncoder(&b)
-	jEnc.SetEscapeHTML(false)
-	err := jEnc.Encode(dataM)
+	dataB, err := json.Marshal(dataM)
 	if err != nil {
 		return fmt.Errorf("failed to marshal data for Stripe Request: %w", err)
 	}
@@ -141,7 +145,7 @@ func PostToStripe(td TokenData) error {
 	if len(td.Reference) > 0 {
 		url = fmt.Sprintf("%s&reference=%s", url, td.Reference)
 	}
-	req, err := http.NewRequest("POST", url, &b)
+	req, err := http.NewRequest("POST", url, bytes.NewReader(dataB))
 	if err != nil {
 		return fmt.Errorf("failed to make POST /proxy request: %w", err)
 	}
