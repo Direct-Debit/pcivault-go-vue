@@ -3,8 +3,8 @@
 This is a working example on how to use the [PCI Vault API](https://api.pcivault.io) with a Vue frontend and Golang backend.
 
 This project has code that:
-- incorporates the [PCI Vault PCD Form](https://api.pcivault.io/pcd/how-to-capture-and-tokenize-payment-card-data.html)
-- sends data to Stripe with a [proxy endpoint](https://api.pcivault.io/#/Proxy/post-proxy-post).
+- Incorporates the [PCI Vault PCD Form](https://api.pcivault.io/pcd/how-to-capture-and-tokenize-payment-card-data.html)
+- Sends data to Stripe with a [proxy endpoint](https://api.pcivault.io/#/Proxy/post-proxy-post).
 
 
 This example is for reference purposes only. Use it to copy code into your
